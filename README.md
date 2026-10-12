@@ -2,8 +2,7 @@
 
 An independent Go CLI for administering GleSYS email hosting, DNS and servers.
 For humans, shell scripts and coding agents. **This is not an official GleSYS
-product.** GleSYS is the provider's trademark. `elg` reverses `gle` and sounds a
-little like the Swedish word for elk.
+product.** GleSYS is the provider's trademark.
 
 ## Installation
 
