@@ -79,6 +79,12 @@ elg server stop SERVER_ID --dry-run --json
 Only explicitly supplied settings change; `0`, `false` and an empty autoresponse
 message are intentional values. Alias commands accept one forwarding destination.
 DNS hosting never registers a domain; domain deletion never force-deletes email.
+Before deleting a domain, inspect `elg email list DOMAIN --json`: the domain cannot
+be deleted while aliases or mailboxes remain. If their removal is covered by the
+user's request, delete those resources through the typed email commands first,
+verify that both lists are empty, then run `elg dns domain delete DOMAIN --yes`.
+If the scope does not cover the remaining email resources, clarify it before
+deleting them. Do not bypass this sequence with a forced generic API deletion.
 Server creation requires explicit template, platform, datacenter, hostname and
 sizing. Provisioning uses public-key, user, password or cloud-config files;
 KVM needs users with credentials or a cloud-config template. Inspect creation help
