@@ -61,7 +61,7 @@ Selection is independent for each setting:
 - Project: `--project`, `ELG_PROJECT`, `ELG_PROJECT_ID`, profile project.
 - Key: selected profile's configured variable, otherwise `ELG_API_KEY`. A missing
   configured variable is an error; no different project's key is substituted.
-- Output: `--output` (wins over `--json`), `--json`, `ELG_OUTPUT`, terminal default.
+- Output: human-readable by default; explicit `--json` or `--ndjson` only.
 - Timeout: `--timeout`, `ELG_TIMEOUT`, 30 seconds for the whole API command.
 
 A profile can explicitly set `--api-base-url https://api.example.test`. Only an
@@ -152,10 +152,15 @@ reports `secret_delivery_failed`: do not automatically repeat the mutation.
 No secret is printed as a fallback. An ambiguous mutation transport failure
 reports `mutation_outcome_unknown`; inspect the resource before retrying.
 
-## JSON and generic access
+## Output and generic access
 
-Output defaults to a table in a terminal and JSON when redirected. Use `--json`
-or `--output table|json` explicitly. `--pretty` indents JSON. No colour is emitted.
+Output is human-readable by default, including in pipes and redirected files.
+Nested collections appear as labelled sections and tables. Pass `--json` for one
+JSON envelope or `--ndjson` for newline-delimited envelopes. These flags are
+mutually exclusive; `--pretty` requires `--json`. No colour is emitted.
+
+`--output` and `ELG_OUTPUT` are no longer supported. Scripts written for v0.1.0
+must explicitly pass `--json` instead of relying on redirected stdout.
 
 ```json
 {"schema_version":1,"data":[],"meta":{"command":"email account list","project":"CL12345"}}
@@ -167,6 +172,16 @@ names, quota units and provider dates are retained. Arrays are ordered by addres
 domain or record/server/template ID where no API ordering is required. Overview
 fetches every page by default; `--page` selects one. `meta.pages_fetched` and
 `meta.complete` describe completeness; provider pagination remains in the data.
+
+NDJSON emits one compact envelope per top-level list item, with the same metadata
+on each line. Empty lists emit no lines. Objects (including overview and generic
+provider responses) and successful no-data operations emit one envelope. Nested
+arrays remain inside their parent object. JSON numbers and secret redaction are
+preserved in both machine formats.
+
+```sh
+elg email account list example.com --ndjson | jq -r '.data.emailaccount'
+```
 
 ```sh
 elg api call email/quota --data-file quota-request.json --json
@@ -194,7 +209,8 @@ sharing its output. `--show-secrets` permits result secrets but never the CLI's 
 authentication key. Debug logs contain operation names, never request bodies or
 authentication headers. Result data goes to stdout; errors/prompts go to stderr.
 
-JSON errors leave stdout empty and write one error envelope to stderr:
+JSON and NDJSON errors leave stdout empty and write one compact error envelope
+to stderr. Default errors are human-readable:
 
 ```json
 {"schema_version":1,"error":{"code":"not_found","message":"Email account was not found","http_status":404}}
@@ -215,6 +231,11 @@ JSON errors leave stdout empty and write one error envelope to stderr:
 
 Help, shell completion and version have specialised output. Generate completion
 with `elg completion bash|zsh|fish|powershell`.
+
+## Agent skill
+
+The repository includes an [elg skill](.agents/skills/elg/SKILL.md) for agents using
+the CLI, covering profiles, explicit machine formats, mutations and secrets.
 
 ## Development and verification
 

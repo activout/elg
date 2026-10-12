@@ -101,7 +101,7 @@ func TestConfigurationLifecycleAndDryRun(t *testing.T) {
 		stderr.Reset()
 		a := newApp(strings.NewReader(""), &out, &stderr, BuildInfo{Version: "test"})
 		a.getenv = func(string) string { return "" }
-		exit := a.execute(context.Background(), append(args, "--config", path))
+		exit := a.execute(context.Background(), append(args, "--config", path, "--json"))
 		return exit, out.String(), stderr.String()
 	}
 	check := func(exit int, out, err string) map[string]any { return success(t, exit, out, err) }

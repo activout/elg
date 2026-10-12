@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"sort"
+	"strconv"
 	"strings"
 	"text/tabwriter"
 )
@@ -80,19 +81,31 @@ func Write(w io.Writer, data any, meta map[string]any, format string, pretty, sh
 	}
 	v = Redact(v, show, key)
 	var buf bytes.Buffer
-	if format == "json" {
+	if format == "json" || format == "ndjson" {
 		e := json.NewEncoder(&buf)
 		e.SetEscapeHTML(false)
-		if pretty {
+		if pretty && format == "json" {
 			e.SetIndent("", "  ")
 		}
-		if err = e.Encode(Envelope{1, v, meta}); err != nil {
-			return err
+		rows := []any{v}
+		if format == "ndjson" {
+			if list, ok := v.([]any); ok {
+				rows = list
+			}
+		}
+		for _, row := range rows {
+			if err = e.Encode(Envelope{1, row, meta}); err != nil {
+				return err
+			}
 		}
 	} else if v == nil {
-		fmt.Fprintf(&buf, "%v: %v\n", meta["operation"], meta["target"])
+		if operation, ok := meta["operation"]; ok {
+			fmt.Fprintf(&buf, "%s: %s\n", cell(operation), cell(meta["target"]))
+		} else {
+			fmt.Fprintln(&buf, "No result")
+		}
 	} else {
-		table(&buf, v)
+		table(&buf, v, "")
 	}
 	_, err = w.Write(buf.Bytes())
 	return err
@@ -107,7 +120,29 @@ func WriteError(w io.Writer, e Error, jsonMode bool) {
 		fmt.Fprintln(w, "Error:", e.Message)
 	}
 }
-func cell(v any) string { b, _ := json.Marshal(v); return string(b) }
+func cell(v any) string {
+	switch x := v.(type) {
+	case nil:
+		return "—"
+	case string:
+		q := strconv.Quote(x)
+		return q[1 : len(q)-1]
+	case []any:
+		values := make([]string, len(x))
+		for i, v := range x {
+			values[i] = cell(v)
+		}
+		return strings.Join(values, ", ")
+	case map[string]any:
+		values := []string{}
+		for _, k := range keys(x) {
+			values = append(values, cell(k)+"="+cell(x[k]))
+		}
+		return strings.Join(values, ", ")
+	default:
+		return fmt.Sprint(v)
+	}
+}
 func keys(m map[string]any) []string {
 	k := make([]string, 0, len(m))
 	for s := range m {
@@ -116,45 +151,71 @@ func keys(m map[string]any) []string {
 	sort.Strings(k)
 	return k
 }
-func table(w io.Writer, v any) {
+func table(w io.Writer, v any, indent string) {
 	t := tabwriter.NewWriter(w, 0, 4, 2, ' ', 0)
 	defer t.Flush()
 	switch x := v.(type) {
 	case []any:
 		if len(x) == 0 {
-			fmt.Fprintln(t, "No results")
+			fmt.Fprintln(t, indent+"No results")
 			return
 		}
 		columns := map[string]any{}
+		allObjects := true
 		for _, r := range x {
 			if m, ok := r.(map[string]any); ok {
 				for k := range m {
 					columns[k] = nil
 				}
+			} else {
+				allObjects = false
 			}
 		}
 		names := keys(columns)
-		if len(names) == 0 {
+		if !allObjects || len(names) == 0 {
 			for _, r := range x {
-				fmt.Fprintln(t, cell(r))
+				fmt.Fprintln(t, indent+cell(r))
 			}
 			return
 		}
-		fmt.Fprintln(t, strings.Join(names, "\t"))
+		headers := make([]string, len(names))
+		for i, k := range names {
+			headers[i] = cell(k)
+		}
+		fmt.Fprintln(t, indent+strings.Join(headers, "\t"))
 		for _, r := range x {
 			m, _ := r.(map[string]any)
 			vals := make([]string, len(names))
 			for i, k := range names {
 				vals[i] = cell(m[k])
 			}
-			fmt.Fprintln(t, strings.Join(vals, "\t"))
+			fmt.Fprintln(t, indent+strings.Join(vals, "\t"))
 		}
 	case map[string]any:
-		fmt.Fprintln(t, "FIELD\tVALUE")
+		if len(x) == 0 {
+			fmt.Fprintln(t, indent+"No results")
+			return
+		}
+		nested := []string{}
+		header := false
 		for _, k := range keys(x) {
-			fmt.Fprintf(t, "%s\t%s\n", k, cell(x[k]))
+			switch x[k].(type) {
+			case map[string]any, []any:
+				nested = append(nested, k)
+				continue
+			}
+			if !header {
+				fmt.Fprintln(t, indent+"FIELD\tVALUE")
+				header = true
+			}
+			fmt.Fprintf(t, "%s%s\t%s\n", indent, cell(k), cell(x[k]))
+		}
+		_ = t.Flush()
+		for _, k := range nested {
+			fmt.Fprintf(w, "%s%s:\n", indent, cell(k))
+			table(w, x[k], indent+"  ")
 		}
 	default:
-		fmt.Fprintln(t, cell(v))
+		fmt.Fprintln(t, indent+cell(v))
 	}
 }

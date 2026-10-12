@@ -39,21 +39,21 @@ func invalid(message string) error  { return &failure{"invalid_input", message, 
 func notFound(message string) error { return &failure{"not_found", message, 4, 404} }
 
 type app struct {
-	root                                                          *cobra.Command
-	in                                                            io.Reader
-	out, err                                                      io.Writer
-	getenv                                                        func(string) string
-	profile, project, configPath, format, timeoutText, baseURL    string
-	json, pretty, yes, nonInteractive, dryRun, debug, showSecrets bool
-	client                                                        *glesys.Client
-	key                                                           string
-	requestSecrets                                                []string
-	meta                                                          map[string]any
-	ctx                                                           context.Context
-	cancel                                                        context.CancelFunc
-	build                                                         BuildInfo
-	inputTTY, outputTTY                                           bool
-	testBaseURL                                                   string
+	root                                                                  *cobra.Command
+	in                                                                    io.Reader
+	out, err                                                              io.Writer
+	getenv                                                                func(string) string
+	profile, project, configPath, format, timeoutText, baseURL            string
+	json, ndjson, pretty, yes, nonInteractive, dryRun, debug, showSecrets bool
+	client                                                                *glesys.Client
+	key                                                                   string
+	requestSecrets                                                        []string
+	meta                                                                  map[string]any
+	ctx                                                                   context.Context
+	cancel                                                                context.CancelFunc
+	build                                                                 BuildInfo
+	inputTTY, outputTTY                                                   bool
+	testBaseURL                                                           string
 }
 
 func newApp(in io.Reader, out, err io.Writer, build BuildInfo) *app {
@@ -74,8 +74,9 @@ func newApp(in io.Reader, out, err io.Writer, build BuildInfo) *app {
 	f.StringVar(&a.profile, "profile", "", "Named profile (ELG_PROFILE)")
 	f.StringVar(&a.project, "project", "", "Project ID (ELG_PROJECT; ELG_PROJECT_ID fallback)")
 	f.StringVar(&a.configPath, "config", "", "Configuration file (ELG_CONFIG)")
-	f.StringVar(&a.format, "output", "", "Output: table or json (ELG_OUTPUT)")
-	f.BoolVar(&a.json, "json", false, "Alias for --output json")
+	f.BoolVar(&a.json, "json", false, "Output a JSON result envelope")
+	f.BoolVar(&a.ndjson, "ndjson", false, "Output one compact JSON envelope per list item")
+	r.MarkFlagsMutuallyExclusive("json", "ndjson")
 	f.BoolVar(&a.pretty, "pretty", false, "Indent JSON results")
 	f.BoolVar(&a.yes, "yes", false, "Confirm destructive operations")
 	f.BoolVar(&a.nonInteractive, "non-interactive", false, "Never prompt")
@@ -130,7 +131,7 @@ func (a *app) execute(ctx context.Context, args []string) int {
 			message = strings.ReplaceAll(message, secret, "[REDACTED]")
 		}
 	}
-	output.WriteError(a.err, output.Error{Code: code, Message: message, HTTPStatus: status}, a.errorJSON(args))
+	output.WriteError(a.err, output.Error{Code: code, Message: message, HTTPStatus: status}, a.machineErrors(args))
 	return exit
 }
 func classify(err error) (string, int, int) {
@@ -170,50 +171,37 @@ func classify(err error) (string, int, int) {
 	}
 	return "application_error", 0, 1
 }
-func (a *app) errorJSON(args []string) bool {
-	format := a.getenv("ELG_OUTPUT")
-	jsonAlias := false
-	explicit := ""
-	for i, s := range args {
-		if s == "--json" || s == "--json=true" {
-			jsonAlias = true
+
+// Inspect explicit flags even when argument parsing failed before settings ran.
+func (a *app) machineErrors(args []string) bool {
+	jsonMode, ndjsonMode := false, false
+	for _, s := range args {
+		if s == "--" {
+			break
 		}
-		if s == "--json=false" {
-			jsonAlias = false
-		}
-		if s == "--output" && i+1 < len(args) {
-			explicit = args[i+1]
-		}
-		if strings.HasPrefix(s, "--output=") {
-			explicit = strings.TrimPrefix(s, "--output=")
+		switch s {
+		case "--json", "--json=true":
+			jsonMode = true
+		case "--json=false":
+			jsonMode = false
+		case "--ndjson", "--ndjson=true":
+			ndjsonMode = true
+		case "--ndjson=false":
+			ndjsonMode = false
 		}
 	}
-	if explicit != "" {
-		return explicit == "json"
-	}
-	if jsonAlias {
-		return true
-	}
-	if format != "" {
-		return format == "json"
-	}
-	return !a.outputTTY
+	return jsonMode || ndjsonMode
 }
 func (a *app) settings() error {
-	if !a.root.PersistentFlags().Changed("output") {
-		a.format = a.getenv("ELG_OUTPUT")
-		if a.json {
-			a.format = "json"
-		}
-	}
-	if a.format == "" {
+	a.format = "table"
+	if a.json {
 		a.format = "json"
-		if a.outputTTY {
-			a.format = "table"
-		}
 	}
-	if a.format != "table" && a.format != "json" {
-		return invalid("output must be table or json")
+	if a.ndjson {
+		a.format = "ndjson"
+	}
+	if a.pretty && !a.json {
+		return invalid("--pretty requires --json")
 	}
 	if !a.root.PersistentFlags().Changed("config") {
 		a.configPath = a.getenv("ELG_CONFIG")
@@ -227,6 +215,7 @@ func (a *app) settings() error {
 	}
 	return nil
 }
+
 func (a *app) connect(c *cobra.Command) error {
 	if err := a.settings(); err != nil {
 		return err

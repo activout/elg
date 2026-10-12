@@ -98,7 +98,7 @@ func (f *fixture) exchanges() []exchange {
 	return append([]exchange(nil), f.requests...)
 }
 func (f *fixture) run(args ...string) (int, string, string) {
-	return f.runWith(context.Background(), nil, "", args...)
+	return f.runWith(context.Background(), nil, "", append(args, "--json")...)
 }
 func (f *fixture) runWith(ctx context.Context, env map[string]string, input string, args ...string) (int, string, string) {
 	var out, err bytes.Buffer
@@ -281,12 +281,12 @@ func TestGenericPrecisionRedactionAndEndpointProtection(t *testing.T) {
 	if !strings.Contains(out, "9007199254740993123") || strings.Contains(out, "must-hide") {
 		t.Fatalf("raw data damaged: %s", out)
 	}
-	exit, out, err = f.run("api", "call", "email/quota", "--data-file", "-")
+	exit, out, err = f.run("api", "call", "email/quota", "--data-file", "-", "--json")
 	errorCode(t, exit, out, err, 2, "invalid_input")
 }
 func TestGenericStdinAndBadEndpoints(t *testing.T) {
 	f := newFixture(t, nil)
-	exit, out, err := f.runWith(context.Background(), nil, `{"emailaccount":"a@example.com"}`, "api", "call", "email/quota", "--data-file", "-")
+	exit, out, err := f.runWith(context.Background(), nil, `{"emailaccount":"a@example.com"}`, "api", "call", "email/quota", "--data-file", "-", "--json")
 	success(t, exit, out, err)
 	if f.exchanges()[0].method != "POST" || f.exchanges()[0].body["emailaccount"] != "a@example.com" {
 		t.Fatal("stdin body")
@@ -295,7 +295,7 @@ func TestGenericStdinAndBadEndpoints(t *testing.T) {
 		exit, out, err = f.run("api", "call", ep, "--yes")
 		errorCode(t, exit, out, err, 2, "invalid_input")
 	}
-	exit, out, err = f.runWith(context.Background(), nil, `{} {}`, "api", "call", "email/quota", "--data-file", "-")
+	exit, out, err = f.runWith(context.Background(), nil, `{} {}`, "api", "call", "email/quota", "--data-file", "-", "--json")
 	errorCode(t, exit, out, err, 2, "invalid_input")
 }
 func TestParserErrorsAndOutputSelection(t *testing.T) {
@@ -304,9 +304,9 @@ func TestParserErrorsAndOutputSelection(t *testing.T) {
 		exit, out, err := f.run(args...)
 		errorCode(t, exit, out, err, 2, "invalid_input")
 	}
-	exit, out, err := f.run("version", "--output", "table")
+	exit, out, err := f.runWith(context.Background(), nil, "", "version")
 	if exit != 0 || err != "" || strings.HasPrefix(out, "{") {
-		t.Fatal("explicit table output ignored")
+		t.Fatal("human default output ignored")
 	}
 	f.success(f.run("version", "--pretty"))
 }
@@ -358,7 +358,7 @@ func TestCommandDeadlineAndInterruption(t *testing.T) {
 	errorCode(t, exit, out, err, 6, "transport_error")
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
-	exit, out, err = f.runWith(ctx, nil, "", "server", "list")
+	exit, out, err = f.runWith(ctx, nil, "", "server", "list", "--json")
 	errorCode(t, exit, out, err, 130, "interrupted")
 }
 func TestProfilePrecedenceAndMissingConfiguredKey(t *testing.T) {
@@ -373,7 +373,7 @@ func TestProfilePrecedenceAndMissingConfiguredKey(t *testing.T) {
 		a := newApp(strings.NewReader(""), &out, &err, BuildInfo{Version: "test"})
 		a.testBaseURL = f.server.URL
 		a.getenv = func(k string) string { return env[k] }
-		return a.execute(context.Background(), append(args, "--config", path)), out.String(), err.String()
+		return a.execute(context.Background(), append(args, "--config", path, "--json")), out.String(), err.String()
 	}
 	check := func(exit int, out, err string) map[string]any { return success(t, exit, out, err) }
 	env := map[string]string{"ELG_PROFILE": "selected", "ELG_PROJECT": "CLenv", "SELECTED_KEY": "fixture-secret", "ELG_API_KEY": "wrong-key", "DEFAULT_KEY": "fixture-secret"}

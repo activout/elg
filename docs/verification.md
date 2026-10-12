@@ -16,6 +16,11 @@ large numbers, response closure/limits, malformed HTTP responses, deadlines,
 interruption, read-only POST retries and no mutation retries, dry-run and
 non-interactive confirmation.
 
+Output regressions also cover human-readable defaults in redirected streams and
+across command groups, removal of implicit environment selection, NDJSON list,
+empty/single/no-data results, exact numbers, secret redaction, buffered encoding
+failures, explicit format conflicts and parser errors in both machine modes.
+
 ## Read-only production check, 12 October 2026
 
 An explicitly supplied local environment file provided the project and key. It

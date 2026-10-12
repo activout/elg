@@ -5,7 +5,7 @@ public `activout/elg`, binary `elg`, MIT licence, `ELG_*` configuration variable
 (with `ELG_PROJECT_ID` fallback), separate public SDK fork permitted, read-only
 live tests permitted, and publication of v0.1.0 authorised. The known unrelated
 `elg` command-name collision was accepted. The source specification below is
-adapted only for naming; coverage records API decisions and limitations.
+adapted for naming and output selection; coverage records API decisions and limitations. Human-readable output is always the default, and only --json or --ndjson selects a machine format.
 
 # GleSYS CLI, code agent specification
 
@@ -121,7 +121,7 @@ IPs, load balancers, databases, object storage, server disks and networking are 
 
 ## 4. Output contract
 
-Support global `--output table|json`, with `--json` as an alias for `--output json`. Default to table in a terminal and JSON when stdout is redirected. An explicit output option always wins. Add `--pretty` for indented JSON; default JSON is compact UTF-8 with a trailing newline.
+Default to human-readable output for every command, including redirected stdout. Require explicit `--json` for JSON or `--ndjson` for NDJSON; these flags are mutually exclusive. Do not support `--output` or environment-based output selection. Add `--pretty` for indented JSON only; default JSON is compact UTF-8 with a trailing newline. NDJSON uses one compact CLI envelope per top-level list item, no lines for an empty list, and one envelope for objects or no-data operations. Nested collections remain inside their parent object.
 
 Ordinary commands use this versioned envelope:
 
@@ -140,13 +140,13 @@ Ordinary commands use this versioned envelope:
 
 Write only result data to stdout. Write diagnostics, prompts, warnings and progress to stderr. Disable colour when output is redirected or `NO_COLOR` is set. Buffer and validate JSON before writing so a failure cannot leave a partial success document.
 
-In JSON mode, errors produce no stdout and exactly one JSON object on stderr:
+In JSON or NDJSON mode, errors produce no stdout and exactly one JSON object on stderr:
 
 ```json
 {"schema_version":1,"error":{"code":"not_found","message":"Email account was not found","http_status":404}}
 ```
 
-Omit unavailable details. Do not infer status codes by parsing arbitrary SDK error strings when an SDK change can expose structured errors. Parser errors must follow this contract when JSON mode is selected, and must not append usage text. Help, completion and version commands have their documented specialised output.
+Omit unavailable details. Do not infer status codes by parsing arbitrary SDK error strings when an SDK change can expose structured errors. Parser errors must follow this contract when JSON or NDJSON mode is selected, and must not append usage text. Help, completion and version commands have their documented specialised output.
 
 Stable exit codes:
 
@@ -177,7 +177,7 @@ Support named profiles and project selection:
 
 Store configuration in the platform's standard per-user configuration directory. Profiles contain project ID, an environment-variable name for the API key and optional non-secret defaults. Do not store API keys in plaintext in the profile. A keyring integration is optional.
 
-Global options include `--profile`, `--project`, `--config`, `--timeout`, `--output`, `--json`, `--pretty`, `--yes`, `--non-interactive`, `--dry-run` and `--debug`. The timeout default is 30 seconds and applies to the whole command, including pagination and retries. Use a cancellable context, including for SIGINT.
+Global options include `--profile`, `--project`, `--config`, `--timeout`, `--json`, `--ndjson`, `--pretty`, `--yes`, `--non-interactive`, `--dry-run` and `--debug`. The timeout default is 30 seconds and applies to the whole command, including pagination and retries. Use a cancellable context, including for SIGINT.
 
 Resolve each setting independently: explicit flag, documented environment variable, selected profile, default. An explicit `--profile` beats `ELG_PROFILE`, which beats the saved default. `--project` overrides `ELG_PROJECT` and the profile project. The API key comes from the selected profile's configured variable, or `ELG_API_KEY` if no such variable is configured. If a configured credential variable is missing, fail instead of falling back to a different account's key. Do not provide a command-line API-key value flag that exposes credentials in process arguments.
 
