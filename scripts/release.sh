@@ -30,6 +30,8 @@ for target in linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64; d
   if [[ $system == windows ]]; then binary=elg.exe; fi
   GOOS=$system GOARCH=$architecture CGO_ENABLED=0 go build \
     -trimpath -buildvcs=false -ldflags "$flags" -o "$build_dir/$binary" ./cmd/elg
+  mkdir -p "$destination/binaries/${system}_${architecture}"
+  cp "$build_dir/$binary" "$destination/binaries/${system}_${architecture}/$binary"
   stem=elg_${version}_${system}_${architecture}
   if [[ $system == windows ]]; then
     archive=$stem.zip

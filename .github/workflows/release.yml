@@ -5,9 +5,11 @@ on:
       version:
         description: Existing version tag to build and publish
         required: true
-        default: v0.1.0
+        default: v0.2.0
 permissions:
   contents: write
+  id-token: write
+  attestations: write
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -16,16 +18,25 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ inputs.version }}
+          ref: refs/tags/${{ inputs.version }}
           fetch-depth: 0
       - uses: actions/setup-go@v7
         with:
           go-version: '1.27.x'
+      - name: Require workflow and build to use the same release tag
+        run: test "$GITHUB_REF" = "refs/tags/$RELEASE_VERSION"
       - run: go vet ./...
       - run: go test ./...
       - run: go test -race ./...
       - run: bash scripts/release.sh "$RELEASE_VERSION" dist
+      - name: Attest release archives and unpacked binaries
+        uses: actions/attest@v4
+        with:
+          subject-path: |
+            dist/*.tar.gz
+            dist/*.zip
+            dist/binaries/*/*
       - name: Publish binaries and checksums
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$RELEASE_VERSION" dist/* --verify-tag --title "elg $RELEASE_VERSION" --generate-notes
+        run: gh release create "$RELEASE_VERSION" dist/*.tar.gz dist/*.zip dist/checksums.txt --verify-tag --title "elg $RELEASE_VERSION" --notes-file "docs/release-notes-$RELEASE_VERSION.md"

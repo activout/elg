@@ -11,6 +11,19 @@ Check it against the release's `checksums.txt`, extract it, and put `elg` (or
 `elg.exe`) on your PATH. Linux and macOS support amd64 and arm64; Windows supports
 amd64. Run `elg version --json` to inspect the build and SDK pin.
 
+From v0.2.0, release archives and their unpacked executables have GitHub build
+provenance attestations. Verify either before running the binary:
+
+```sh
+gh attestation verify elg_v0.2.0_darwin_arm64.tar.gz --repo activout/elg
+# After extraction:
+gh attestation verify ./elg --repo activout/elg
+```
+
+These attestations establish GitHub build provenance; Apple signing and
+notarisation are separate. For macOS's download quarantine warning, see
+[Apple's instructions](https://support.apple.com/en-us/102445).
+
 The unrelated European Language Grid Python package also installs an `elg`
 command. If you use both, install this binary under a different local filename.
 
@@ -246,11 +259,18 @@ go test ./...
 go test -race ./...
 # Opt-in reads only; never logs resources or credential values:
 go test ./internal/cli -run TestLiveReadOnly -v -args -live-env-file=/path/to/.env
-bash scripts/release.sh v0.1.0 dist
+bash scripts/release.sh v0.2.0 dist
 ```
 
 The default test suite requires no credentials. See [SDK coverage](docs/sdk-coverage.md),
 [extension guidance](docs/extending.md) and [verification](docs/verification.md).
-The release workflow is manually dispatched against an existing version tag.
+The release workflow is manually dispatched against the same existing version
+tag supplied as its input. For example, after creating and pushing `v0.2.0`:
+
+```sh
+gh workflow run release.yml --ref v0.2.0 -f version=v0.2.0
+```
+
+The workflow attests the archives and unpacked binaries before publishing.
 Email messages, mailbox migration, registrar operations, keyrings, MCP, networking
 and other future command groups are outside v0.1.0.
