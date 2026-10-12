@@ -1,0 +1,6 @@
+/elg
+/elg.exe
+/dist/
+.env
+*.test
+coverage.out

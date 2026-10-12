@@ -1,0 +1,31 @@
+name: Release
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Existing version tag to build and publish
+        required: true
+        default: v0.1.0
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      RELEASE_VERSION: ${{ inputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.version }}
+          fetch-depth: 0
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.27.x'
+      - run: go vet ./...
+      - run: go test ./...
+      - run: go test -race ./...
+      - run: python3 scripts/release.py "$RELEASE_VERSION" dist
+      - name: Publish binaries and checksums
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$RELEASE_VERSION" dist/* --verify-tag --title "elg $RELEASE_VERSION" --generate-notes
