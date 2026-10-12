@@ -226,7 +226,7 @@ go test ./...
 go test -race ./...
 # Opt-in reads only; never logs resources or credential values:
 go test ./internal/cli -run TestLiveReadOnly -v -args -live-env-file=/path/to/.env
-python3 scripts/release.py v0.1.0 dist
+bash scripts/release.sh v0.1.0 dist
 ```
 
 The default test suite requires no credentials. See [SDK coverage](docs/sdk-coverage.md),

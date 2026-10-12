@@ -29,7 +29,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: '1.27.x'
-      - run: python3 scripts/release.py v0.1.0 dist
+      - run: bash scripts/release.sh v0.1.0 dist
       - uses: actions/upload-artifact@v4
         with:
           name: build-check

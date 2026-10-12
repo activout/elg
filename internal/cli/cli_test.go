@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"runtime"
 	"strings"
 	"sync"
 	"testing"
@@ -228,7 +229,7 @@ func TestPasswordPreflightAndRedaction(t *testing.T) {
 		t.Fatalf("secret bytes: %q %v", b, e)
 	}
 	info, _ := os.Stat(path)
-	if info.Mode().Perm()&0077 != 0 {
+	if runtime.GOOS != "windows" && info.Mode().Perm()&0077 != 0 {
 		t.Fatal("secret file is not private")
 	}
 	n := len(f.exchanges())
