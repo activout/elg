@@ -1,5 +1,7 @@
 # elg
 
+<img src="assets/elg.png" alt="elg logo: a blue and silver eagle with antlers" width="320">
+
 An independent Go CLI for administering GleSYS email hosting, DNS and servers.
 For humans, shell scripts and coding agents. **This is not an official GleSYS
 product.** GleSYS is the provider's trademark.
