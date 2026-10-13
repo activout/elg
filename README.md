@@ -1,6 +1,6 @@
 # elg
 
-<img src="assets/elg.png" alt="elg logo: a blue and silver eagle with antlers" width="320">
+<img src="assets/elg.png" alt="elg logo: a blue and silver moose with a falcon head" width="320">
 
 An independent Go CLI for administering GleSYS email hosting, DNS and servers.
 For humans, shell scripts and coding agents. **This is not an official GleSYS
