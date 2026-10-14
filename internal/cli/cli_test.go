@@ -454,3 +454,12 @@ func TestDNSApexHostEncoding(t *testing.T) {
 		})
 	}
 }
+
+func TestDNSRecordTypeUpdateRejectedBeforeMutation(t *testing.T) {
+	f := newFixture(t, nil)
+	exit, out, err := f.run("dns", "record", "update", "12", "--type", "AAAA", "--data", "2001:db8::1")
+	errorCode(t, exit, out, err, 2, "invalid_input")
+	if len(f.exchanges()) != 0 {
+		t.Fatal("unsupported type change must not partially update record data")
+	}
+}

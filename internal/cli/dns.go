@@ -174,9 +174,6 @@ func (a *app) recordWrite(verb string) *cobra.Command {
 			return err
 		}
 		p := glesys.DNSRecordPatch{RecordID: id}
-		if c.Flags().Changed("type") {
-			p.Type = &kind
-		}
 		if c.Flags().Changed("host") {
 			p.Host = &host
 		}
@@ -186,7 +183,7 @@ func (a *app) recordWrite(verb string) *cobra.Command {
 		if c.Flags().Changed("ttl") {
 			p.TTL = &ttl
 		}
-		if p.Type == nil && p.Host == nil && p.Data == nil && p.TTL == nil {
+		if p.Host == nil && p.Data == nil && p.TTL == nil {
 			return invalid("supply at least one record setting")
 		}
 		if err = a.connect(c); err != nil {
@@ -201,11 +198,11 @@ func (a *app) recordWrite(verb string) *cobra.Command {
 		}
 		return a.result(v)
 	})
-	c.Flags().StringVar(&kind, "type", "", "Record type, e.g. A, AAAA, MX, TXT or SRV")
 	c.Flags().StringVar(&host, "host", "", "Host/name within the zone (empty or @ for apex)")
 	c.Flags().StringVar(&data, "data", "", "Provider record data; include priority for MX and SRV components")
 	c.Flags().IntVar(&ttl, "ttl", 0, "TTL in seconds; omitted uses the provider default")
 	if verb == "create" {
+		c.Flags().StringVar(&kind, "type", "", "Record type, e.g. A, AAAA, MX, TXT or SRV")
 		_ = c.MarkFlagRequired("type")
 		_ = c.MarkFlagRequired("host")
 		_ = c.MarkFlagRequired("data")

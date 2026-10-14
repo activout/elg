@@ -42,7 +42,7 @@ untested mutations remain unverified.
 | dns domain export | DNSDomains.Export | domain/export | Read; zonefile inside resource object |
 | dns record list | DNSDomains.ListRecords | domain/listrecords | Read; sorted by record ID |
 | dns record create | DNSDomains.AddRecord | domain/addrecord | Create; type, host, data and optional positive TTL |
-| dns record update | DNSDomains.UpdateRecordPatch (addition) | domain/updaterecord | Update; omitted versus empty retained |
+| dns record update | DNSDomains.UpdateRecordPatch (addition) | domain/updaterecord | Update host/data/TTL; omitted values retained; type changes require explicit replacement |
 | dns record delete | DNSDomains.DeleteRecord | domain/deleterecord | Delete; confirmation |
 | server list/get | Servers.List/Details | server/list, server/details | Read; get includes state |
 | server templates | Servers.Templates | server/templates | Read; sorted platform arrays |
@@ -105,6 +105,33 @@ GleSYS added three NS records even with `createrecords=no`; no MX records were
 created. Cleanup preserved those NS records until the test zone was deleted.
 Server edits, backup clearing, other field combinations and actual mail delivery
 remain unverified live. This records the tested behaviour, not every SDK capability.
+
+### Additional tests without billable resource creation
+
+Further tests on 14 October 2026 created only temporary DNS hosting and records.
+No mailboxes, servers, registrations or renewals were created.
+
+| Test | Observed result |
+| --- | --- |
+| Create and independently read A, AAAA, CNAME, MX, SRV and TXT records | Host, type, data and TTL matched for all six types |
+| Domain details and zone export | Correct domain returned; exported zone contained all test hosts |
+| Generic `domain/listrecords` GET with scalar parameters and POST with JSON parameters | Provider response envelope retained; all six record fields matched the typed SDK list |
+| Human default, JSON and NDJSON on a non-empty live list | Default was human-readable; NDJSON row data matched the JSON list |
+| Exact lookup of an absent mailbox | Exit 4, `not_found`, empty stdout and a single JSON error on stderr |
+| Lookup of an absent DNS zone | Provider HTTP 404 retained; exit 4, `not_found`, empty stdout |
+| Server list and templates | Empty server list; 15 KVM and 16 VMware templates decoded without provisioning |
+
+An A → AAAA type/data update was rejected with HTTP 422. A follow-up with data
+valid for both TXT and A returned success but retained type TXT, through both
+the typed SDK and generic POST. Although the API wiki lists `type` as optional
+for updates, the tested API ignored it. The CLI therefore offers `--type` only
+on creation and rejects it on updates before any data can be partially changed.
+No automatic delete-and-create fallback is performed.
+
+All test records and created zones were removed. The email costs response was
+unchanged before and after these additional tests. Server mutation behaviour,
+multi-page live pagination and failure modes such as timeouts and rate limiting
+remain covered by local fixtures rather than these live checks.
 
 ## Verified read-only table and deferred work
 

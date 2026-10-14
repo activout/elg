@@ -170,6 +170,9 @@ email deletion. `dns domain add` creates no default records unless
 For DNS records, `--host=''` or `--host @` selects the zone apex; the CLI sends `@`
 because the API rejects an empty host. Creation requires `--host`; omitting it
 during an update leaves the host unchanged.
+Updates support host, data and TTL. To change a record's type, explicitly create
+a replacement and delete the old record: the provider ignores `type` on updates,
+so the CLI only accepts `--type` on creation.
 For MX, put priority and destination in `--data`
 (e.g. `"10 mail.example.com."`); SRV data contains priority, weight, port and target.
 Other record data follows the provider's syntax. TTL is positive seconds.
