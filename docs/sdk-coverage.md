@@ -17,7 +17,8 @@ Sources: [SDK](https://github.com/glesys/glesys-go),
 The adapted [specification](specification.md) records the requirements and owner decisions.
 
 All commands below are implemented and have local HTTP exchange tests. Read-only
-production verification is recorded separately; it does not certify mutations.
+verification and limited live mutation tests are recorded separately below;
+untested mutations remain unverified.
 
 | CLI command | SDK service/method | Endpoint | Classification / gaps |
 | --- | --- | --- | --- |
@@ -57,8 +58,9 @@ production verification is recorded separately; it does not certify mutations.
 - The API wiki requires only `emailaccount` on creation and lists no password
   argument. The older SDK requires a `Password` field. The additive creation method
   follows the documented API and sends no arbitrary password. It captures a
-  password from the account or top-level response if supplied. Actual creation and
-  returned-password behaviour remain unverified without mutation permission.
+  password from the account or top-level response if supplied. Creation with
+  returned-password delivery was verified on a disposable mailbox on 14 October
+  2026; this does not certify all possible creation settings.
 - Explicit numeric zero, boolean `no` and empty message values are preserved by
   presence-aware SDK types. Whether an individual value is accepted is determined
   by the API. The CLI never substitutes zero for an omitted flag.
@@ -79,6 +81,30 @@ production verification is recorded separately; it does not certify mutations.
   saved autoresponses and catch-all settings have no verified interface here and
   are unavailable in typed commands. Unsupported operations can be explored via
   deliberate generic access after checking current provider documentation.
+
+## Live mutation verification: 14 October 2026
+
+Authorised tests used a separate, initially empty project and `ruckel.se`, whose
+public DNS remained hosted elsewhere. Each update was followed by an independent
+read. Comparisons checked the changed field and the unchanged decoded resource
+fields, excluding the email modification timestamp and password.
+
+| Test | Observed result |
+| --- | --- |
+| Create a 1 GiB mailbox, spam level 3, antivirus enabled, autoresponse disabled | Settings read back correctly; returned password saved to a non-empty private file |
+| Update spam level 3 → 0 | Zero retained; other settings unchanged |
+| Antivirus enabled → disabled → enabled | Explicit `no` and `yes` retained; other settings unchanged |
+| Set and clear autoresponse text | Text saved and cleared; autoresponse remained disabled |
+| Change TXT data and TTL 300 → 600 | Each change retained; other record fields unchanged |
+| Update DNS host with `--host=''` | Initially rejected with HTTP 400: the API requires a non-empty host. The corrected CLI sends `@`; read-back confirmed the apex and preserved the other fields |
+| Create TXT records with `--host @` and `--host=''` | Both read back as `@` |
+| Update TTL with host omitted | Existing apex host retained |
+
+The mailbox, password file, test TXT records and newly created zone were removed.
+GleSYS added three NS records even with `createrecords=no`; no MX records were
+created. Cleanup preserved those NS records until the test zone was deleted.
+Server edits, backup clearing, other field combinations and actual mail delivery
+remain unverified live. This records the tested behaviour, not every SDK capability.
 
 ## Verified read-only table and deferred work
 

@@ -146,6 +146,9 @@ func (a *app) recordWrite(verb string) *cobra.Command {
 				return invalid("invalid record type")
 			}
 		}
+		if c.Flags().Changed("host") && host == "" {
+			host = "@"
+		}
 		if verb == "create" {
 			if err := validateDomain(args[0]); err != nil {
 				return err
@@ -199,7 +202,7 @@ func (a *app) recordWrite(verb string) *cobra.Command {
 		return a.result(v)
 	})
 	c.Flags().StringVar(&kind, "type", "", "Record type, e.g. A, AAAA, MX, TXT or SRV")
-	c.Flags().StringVar(&host, "host", "", "Host/name within the zone (empty for apex)")
+	c.Flags().StringVar(&host, "host", "", "Host/name within the zone (empty or @ for apex)")
 	c.Flags().StringVar(&data, "data", "", "Provider record data; include priority for MX and SRV components")
 	c.Flags().IntVar(&ttl, "ttl", 0, "TTL in seconds; omitted uses the provider default")
 	if verb == "create" {

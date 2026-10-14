@@ -409,8 +409,8 @@ func TestDNSAndServerWrites(t *testing.T) {
 		t.Fatal("DNS exchange")
 	}
 	f.success(f.run("dns", "record", "update", "12", "--host="))
-	if f.exchanges()[1].body["host"] != "" {
-		t.Fatal("host clearing lost")
+	if f.exchanges()[1].body["host"] != "@" {
+		t.Fatal("empty host must select the zone apex")
 	}
 	f.success(f.run("server", "start", "s1"))
 	f.success(f.run("server", "stop", "s1", "--yes", "--type", "hard"))
@@ -427,5 +427,30 @@ func TestDNSAndServerWrites(t *testing.T) {
 	f.success(f.run("server", "create", "--hostname", "test", "--datacenter", "Falkenberg", "--platform", "KVM", "--template", "debian-id", "--cpu-cores", "2", "--memory-mib", "2048", "--disk-gib", "20", "--cloud-config-file", path))
 	if f.exchanges()[6].body["cloudconfig"] != "#cloud-config\n" || f.exchanges()[6].body["templatename"] != "debian-id" {
 		t.Fatal("provisioning exchange")
+	}
+}
+
+func TestDNSApexHostEncoding(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		args []string
+		host string
+		sent bool
+	}{
+		{"create explicit apex", []string{"dns", "record", "create", "example.com", "--type", "TXT", "--data", "test", "--host", "@"}, "@", true},
+		{"create explicit empty apex", []string{"dns", "record", "create", "example.com", "--type", "TXT", "--data", "test", "--host="}, "@", true},
+		{"create named host", []string{"dns", "record", "create", "example.com", "--type", "TXT", "--data", "test", "--host", "test"}, "test", true},
+		{"update explicit empty apex", []string{"dns", "record", "update", "12", "--host="}, "@", true},
+		{"update named host", []string{"dns", "record", "update", "12", "--host", "test"}, "test", true},
+		{"update omitted host", []string{"dns", "record", "update", "12", "--data", "test"}, "", false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			f := newFixture(t, nil)
+			f.success(f.run(tc.args...))
+			host, sent := f.exchanges()[0].body["host"]
+			if sent != tc.sent || (sent && host != tc.host) {
+				t.Fatalf("host=%v sent=%v, want host=%q sent=%v", host, sent, tc.host, tc.sent)
+			}
+		})
 	}
 }

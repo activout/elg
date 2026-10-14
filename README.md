@@ -65,8 +65,8 @@ needed by the CLI:
   decimal precision. This handles numeric quota amounts returned by the API that
   the upstream SDK's string field cannot decode.
 - **Explicit DNS and server edits:** `DNSRecordPatch` and `ServerPatch` distinguish
-  omitted values from supplied zero or empty values, allowing fields such as DNS
-  hosts, server descriptions and backup schedules to be cleared.
+  omitted values from supplied zero or empty values. The CLI can move a DNS record
+  to the zone apex, clear a server description or clear backup schedules.
 - **Response handling:** response bodies are always closed, reads are limited to
   16 MiB, and malformed or empty success JSON is rejected.
 - **Escaped overview filters:** email overview filters are safely encoded in API
@@ -166,7 +166,11 @@ schedules on update. Additional provisioning can use documented generic API call
 
 DNS hosting never registers or renews a paid domain. Zone deletion never forces
 email deletion. `dns domain add` creates no default records unless
-`--create-records` is supplied. For MX, put priority and destination in `--data`
+`--create-records` is supplied, apart from the provider's automatic NS records.
+For DNS records, `--host=''` or `--host @` selects the zone apex; the CLI sends `@`
+because the API rejects an empty host. Creation requires `--host`; omitting it
+during an update leaves the host unchanged.
+For MX, put priority and destination in `--data`
 (e.g. `"10 mail.example.com."`); SRV data contains priority, weight, port and target.
 Other record data follows the provider's syntax. TTL is positive seconds.
 
