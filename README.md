@@ -8,10 +8,16 @@ product.** GleSYS is the provider's trademark.
 
 ## Installation
 
-Download the archive for your platform from [Releases](https://github.com/activout/elg/releases).
+With [Homebrew](https://brew.sh) on macOS or Linux:
+
+```sh
+brew install activout/tap/elg
+```
+
+Or download the archive for your platform from [Releases](https://github.com/activout/elg/releases).
 Check it against the release's `checksums.txt`, extract it, and put `elg` (or
-`elg.exe`) on your PATH. Linux and macOS support amd64 and arm64; Windows supports
-amd64. Run `elg version --json` to inspect the build and SDK pin.
+`elg.exe`) on your PATH. Linux supports amd64 and arm64, macOS supports Apple Silicon (arm64) and Windows
+supports amd64. Run `elg version --json` to inspect the build and SDK pin.
 
 From v0.2.0, release archives and their unpacked executables have GitHub build
 provenance attestations. Verify either before running the binary:
