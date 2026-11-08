@@ -266,7 +266,7 @@ Mandatory meaningful tests:
 
 Run `gofmt`, `go vet ./...`, `go test ./...` and `go test -race ./...` where supported. Run corresponding checks for SDK patches. Add CI with a current supported Go version and a documented minimum version compatible with the selected dependencies, rather than assuming the SDK's old minimum is ideal for the new CLI.
 
-Provide single binaries for Linux and macOS, amd64 and arm64, and Windows amd64. Include version, build commit and selected SDK version in `elg version`, with JSON support. Supply checksums and a release workflow; do not publish automatically without repository authorisation. Ensure a clean checkout can build without a developer's unpublished local path.
+Provide single binaries for Linux amd64 and arm64, macOS arm64 (Apple Silicon; Intel Macs are not supported) and Windows amd64. Include version, build commit and selected SDK version in `elg version`, with JSON support. Supply checksums and a release workflow; do not publish automatically without repository authorisation. Ensure a clean checkout can build without a developer's unpublished local path.
 
 ## 10. Examples and completion criteria
 

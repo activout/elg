@@ -23,7 +23,7 @@ trap 'rm -rf "$build_dir"' EXIT
 cp README.md LICENSE THIRD-PARTY-NOTICES.txt "$build_dir/"
 : > "$destination/checksums.txt"
 
-for target in linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64; do
+for target in linux/amd64 linux/arm64 darwin/arm64 windows/amd64; do
   system=${target%/*}
   architecture=${target#*/}
   binary=elg
