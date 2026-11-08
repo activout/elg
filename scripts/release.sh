@@ -45,4 +45,4 @@ for target in linux/amd64 linux/arm64 darwin/arm64 windows/amd64; do
   (cd "$destination" && shasum -a 256 "$archive") >> "$destination/checksums.txt"
   echo "$archive"
 done
-test "$(wc -l < "$destination/checksums.txt")" -eq 5
+test "$(wc -l < "$destination/checksums.txt")" -eq 4
