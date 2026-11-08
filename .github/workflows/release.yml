@@ -1,11 +1,12 @@
 name: Release
 on:
+  push:
+    tags: ['v*']
   workflow_dispatch:
     inputs:
       version:
-        description: Existing version tag to build and publish
+        description: Existing version tag to build and publish again
         required: true
-        default: v0.2.0
 permissions:
   contents: write
   id-token: write
@@ -14,11 +15,11 @@ jobs:
   release:
     runs-on: ubuntu-latest
     env:
-      RELEASE_VERSION: ${{ inputs.version }}
+      RELEASE_VERSION: ${{ inputs.version || github.ref_name }}
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: refs/tags/${{ inputs.version }}
+          ref: refs/tags/${{ inputs.version || github.ref_name }}
           fetch-depth: 0
       - uses: actions/setup-go@v7
         with:
@@ -39,4 +40,7 @@ jobs:
       - name: Publish binaries and checksums
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$RELEASE_VERSION" dist/*.tar.gz dist/*.zip dist/checksums.txt --verify-tag --title "elg $RELEASE_VERSION" --notes-file "docs/release-notes-$RELEASE_VERSION.md"
+        run: |
+          notes=docs/release-notes-$RELEASE_VERSION.md
+          if [ -f "$notes" ]; then set -- --notes-file "$notes"; else set -- --generate-notes; fi
+          gh release create "$RELEASE_VERSION" dist/*.tar.gz dist/*.zip dist/checksums.txt --verify-tag --title "elg $RELEASE_VERSION" "$@"
