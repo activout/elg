@@ -313,11 +313,18 @@ bash scripts/release.sh v0.2.0 dist
 
 The default test suite requires no credentials. See [SDK coverage](docs/sdk-coverage.md),
 [extension guidance](docs/extending.md) and [verification](docs/verification.md).
-The release workflow is manually dispatched against the same existing version
-tag supplied as its input. For example, after creating and pushing `v0.2.0`:
+Pushing a version tag publishes the release. It uses
+`docs/release-notes-<tag>.md` as release notes when that file exists, and
+GitHub's generated notes otherwise:
 
 ```sh
-gh workflow run release.yml --ref v0.2.0 -f version=v0.2.0
+git tag v0.2.1 && git push origin v0.2.1
+```
+
+To publish an existing tag again, dispatch the workflow against it:
+
+```sh
+gh workflow run release.yml --ref v0.2.1 -f version=v0.2.1
 ```
 
 The workflow attests the archives and unpacked binaries before publishing.
