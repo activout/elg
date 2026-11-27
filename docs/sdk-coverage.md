@@ -6,8 +6,8 @@ Selected base: `a25ba1b2ddb53c61a9cb1fc53888c98b9ac0b67e` (SDK version 8.5.0,
 module `github.com/glesys/glesys-go/v8`, MIT licence).
 
 Pinned fork: `activout/glesys-go`, commit
-`a1a329dc5a03e28a760efb79dfd5e4b21710c69d`, pseudo-version
-`v8.5.1-0.20261127194513-a1a329dc5a03`. Official imports are retained with a pinned
+`35777997b107f2f59a2056f83f827d69425efb7a`, pseudo-version
+`v8.5.1-0.20261127200250-35777997b107`. Official imports are retained with a pinned
 module replacement, not a moving branch or local path.
 
 Sources: [SDK](https://github.com/glesys/glesys-go),
