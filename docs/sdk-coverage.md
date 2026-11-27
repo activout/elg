@@ -6,8 +6,8 @@ Selected base: `a25ba1b2ddb53c61a9cb1fc53888c98b9ac0b67e` (SDK version 8.5.0,
 module `github.com/glesys/glesys-go/v8`, MIT licence).
 
 Pinned fork: `activout/glesys-go`, commit
-`d652253ae971aa763236fa7896318ab80f7662e0`, pseudo-version
-`v8.5.1-0.20261012191530-d652253ae971`. Official imports are retained with a pinned
+`a1a329dc5a03e28a760efb79dfd5e4b21710c69d`, pseudo-version
+`v8.5.1-0.20261127194513-a1a329dc5a03`. Official imports are retained with a pinned
 module replacement, not a moving branch or local path.
 
 Sources: [SDK](https://github.com/glesys/glesys-go),
@@ -51,7 +51,7 @@ untested mutations remain unverified.
 | server start | Servers.Start | server/start | Mutation; no extra prompt |
 | server stop | Servers.Stop | server/stop | Mutation; soft/hard; confirmation |
 | server delete | Servers.Destroy | server/destroy | Delete; confirmation; keep-IP selection |
-| api call | Client.Request (addition) | validated service/operation | Complete provider envelope; unknown operations require --yes |
+| api call | elg raw request (shared HTTP client) | validated service/operation | Complete provider envelope; unknown operations require --yes |
 
 ## Decisions and resolved gaps
 
@@ -67,8 +67,9 @@ untested mutations remain unverified.
 - Live costs return `pricelist.quota.amount` as a number, contrary to the old SDK
   string model. `CostsDetails` preserves raw pricing JSON instead of changing
   upstream public field types or coercing the output.
-- SDK transport now closes every response, bounds reads, exposes structured HTTP
-  and provider errors, and escapes overview filters. HTTP 200 is the retained
+- SDK transport now closes every response, bounds reads and exposes structured
+  HTTP and provider errors. The API does not unescape overview filters, so elg
+  rejects filters containing `/ ? # % \` or equal to `.`/`..`. HTTP 200 is the retained
   success contract; malformed or empty success JSON is rejected.
 - GET raw scalar parameters use the documented path convention. Unknown fields and
   numeric precision survive; secret redaction is applied only by the CLI.

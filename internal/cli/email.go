@@ -332,6 +332,11 @@ func (a *app) resetPassword() *cobra.Command {
 	return c
 }
 func (a *app) overview(filter string, page int, explicit bool) error {
+	// The SDK puts the filter in the URL path unescaped, and the API does not
+	// unescape it, so reject values that would change the request path.
+	if strings.ContainsAny(filter, "/?#%\\") || filter == "." || filter == ".." {
+		return invalid("filter must not contain / ? # % \\ or be . or ..")
+	}
 	if !explicit {
 		page = 1
 	}
