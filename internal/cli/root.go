@@ -85,7 +85,7 @@ func newApp(in io.Reader, out, err io.Writer, build BuildInfo) *app {
 	f.BoolVar(&a.debug, "debug", false, "Log operation names to stderr, without payloads")
 	f.BoolVar(&a.showSecrets, "show-secrets", false, "Deliberately include result secrets; never authentication credentials")
 	f.StringVar(&a.timeoutText, "timeout", "", "Whole-command timeout (ELG_TIMEOUT; default 30s)")
-	r.AddCommand(a.configCommands(), a.emailCommands(), a.dnsCommands(), a.serverCommands(), a.apiCommands())
+	r.AddCommand(a.configCommands(), a.emailCommands(), a.dnsCommands(), a.serverCommands(), a.volumeCommands(), a.apiCommands())
 	r.AddCommand(&cobra.Command{Use: "version", Short: "Show build and SDK versions", Args: cobra.NoArgs, RunE: func(c *cobra.Command, args []string) error {
 		if err := a.settings(); err != nil {
 			return err

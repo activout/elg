@@ -14,7 +14,7 @@ func TestEveryCommandGroupDefaultsToHumanOutputWhenRedirected(t *testing.T) {
 		{"version"}, {"config", "show"}, {"config", "profile", "list"},
 		{"email", "overview"}, {"email", "list", "example.com"}, {"email", "account", "list", "example.com"}, {"email", "costs"},
 		{"dns", "domain", "list"}, {"dns", "domain", "export", "example.com"},
-		{"server", "list"}, {"server", "templates"}, {"server", "stop", "s1", "--dry-run"},
+		{"server", "list"}, {"server", "templates"}, {"volume", "list"}, {"volume", "tiers"}, {"volume", "get", "v1"}, {"server", "stop", "s1", "--dry-run"},
 		{"api", "call", "email/costs"}, {"email", "alias", "create", "info@example.com", "--to", "a@example.com"},
 	} {
 		t.Run(strings.Join(args, " "), func(t *testing.T) {
