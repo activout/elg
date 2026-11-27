@@ -2,11 +2,7 @@
 
 - New `elg volume` commands (alias `elg blockstorage`) for GleSYS Block Storage:
   `list`, `get`, `tiers`, `cost`, `create`, `rename`, `resize`, `attach`,
-  `detach` and `delete`. Detach and delete require confirmation, and every
-  change supports `--dry-run`. `--datacenter` takes a datacenter key such as
-  `dc-fbg1`. Create, list, get, rename and delete were verified against the live
-  API; attach, detach and resize were not, and `cost` needs an API key with
-  permission for `blockstorage/estimatedcost`.
+  `detach` and `delete`. Detach and delete require confirmation.
 - `email overview --filter` now rejects filters containing `/ ? # % \` or equal
   to `.` or `..` with an invalid-input error (exit code 2), before any request.
   The API does not unescape filters, so such values could never match a domain.
