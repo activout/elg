@@ -85,6 +85,14 @@ func newFixture(t *testing.T, handler func(http.ResponseWriter, *http.Request)) 
 			fmt.Fprint(w, `{"response":{"templates":{"KVM":[],"VMware":[]}}}`)
 		case "server/create", "server/edit", "server/details":
 			fmt.Fprint(w, `{"response":{"server":{"serverid":"s1"}}}`)
+		case "blockstorage/list":
+			fmt.Fprint(w, `{"response":{"volumes":[{"id":"v2","name":"b"},{"id":"v1","name":"a"}]}}`)
+		case "blockstorage/listtiers":
+			fmt.Fprint(w, `{"response":{"tiers":[{"slug":"balanced","name":"Balanced","minsizeingib":1,"maxsizeingib":2048}]}}`)
+		case "blockstorage/create", "blockstorage/details", "blockstorage/edit", "blockstorage/resize", "blockstorage/attach":
+			fmt.Fprint(w, `{"response":{"volume":{"id":"v1","name":"data","sizeingib":10,"status":"ok","attachments":[{"serverid":"s1","devicename":"vdb"}]}}}`)
+		case "blockstorage/estimatedcost":
+			fmt.Fprint(w, `{"response":{"billing":{"currency":"SEK","estimated":{"price":12.5,"total":12.5}}}}`)
 		default:
 			fmt.Fprint(w, `{"response":{"status":{"code":200},"future":{"id":9007199254740993123,"password":"must-hide"}}}`)
 		}

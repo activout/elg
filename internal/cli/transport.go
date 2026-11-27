@@ -15,6 +15,7 @@ var reads = map[string]bool{
 	"email/overview":    true, "email/list": true, "email/quota": true, "email/costs": true,
 	"domain/list": true, "domain/details": true, "domain/export": true, "domain/listrecords": true,
 	"server/list": true, "server/details": true, "server/templates": true,
+	"blockstorage/list": true, "blockstorage/details": true, "blockstorage/listtiers": true, "blockstorage/estimatedcost": true,
 }
 
 type retryTransport struct{ base http.RoundTripper }

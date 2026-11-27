@@ -51,10 +51,28 @@ untested mutations remain unverified.
 | server start | Servers.Start | server/start | Mutation; no extra prompt |
 | server stop | Servers.Stop | server/stop | Mutation; soft/hard; confirmation |
 | server delete | Servers.Destroy | server/destroy | Delete; confirmation; keep-IP selection |
+| volume list | BlockStorageVolumes.List | blockstorage/list | Read; sorted by volume ID; sends the profile project as projectkey |
+| volume get | BlockStorageVolumes.Details | blockstorage/details | Read; includes attachments |
+| volume tiers | BlockStorageVolumes.ListTiers | blockstorage/listtiers | Read; size limits and IOPS |
+| volume cost | BlockStorageVolumes.EstimatedCost | blockstorage/estimatedcost | Read; existing volume or tier and size |
+| volume create | BlockStorageVolumes.Create | blockstorage/create | Create; name, datacenter, tier and size required |
+| volume rename | BlockStorageVolumes.UpdateName | blockstorage/edit | Update; name only |
+| volume resize | BlockStorageVolumes.Resize | blockstorage/resize | Update; grow only, volume must be attached |
+| volume attach | BlockStorageVolumes.Attach | blockstorage/attach | Mutation |
+| volume detach | BlockStorageVolumes.Detach | blockstorage/detach | Mutation; confirmation |
+| volume delete | BlockStorageVolumes.Delete | blockstorage/delete | Delete; confirmation; must be detached |
 | api call | elg raw request (shared HTTP client) | validated service/operation | Complete provider envelope; unknown operations require --yes |
 
 ## Decisions and resolved gaps
 
+- Block Storage (27 November 2026): the API wiki lists `projectkey` as required for
+  `blockstorage/list` and `blockstorage/create`, but `CreateBlockStorageParams` has
+  no such field. Live, both succeed without it; the API key's project is used.
+  Verified live on a disposable 1 GiB capacity volume: create, list, get, rename
+  and delete (delete refused without `--yes`). Timestamps are RFC 3339; `datacenter`
+  takes a key such as `dc-fbg1`, not a name. Attach, detach and resize need a
+  server and remain unverified live. `blockstorage/estimatedcost` returned HTTP 403
+  for the verification key even with Block Storage permissions.
 - The API wiki requires only `emailaccount` on creation and lists no password
   argument. The older SDK requires a `Password` field. The additive creation method
   follows the documented API and sends no arbitrary password. It captures a
@@ -138,9 +156,11 @@ remain covered by local fixtures rather than these live checks.
 
 Read/retry entries are `email/overview`, `email/list`, `email/quota`, `email/costs`,
 `domain/list`, `domain/details`, `domain/export`, `domain/listrecords`,
-`server/list`, `server/details`, `server/templates` and `api/listfunctions`.
+`server/list`, `server/details`, `server/templates`, `blockstorage/list`,
+`blockstorage/details`, `blockstorage/listtiers`, `blockstorage/estimatedcost` and
+`api/listfunctions`.
 GET alone is not a safety classification. Mutations have no automatic retry.
 
-Registrar registration/transfers/renewals, IPs, load balancers, databases, storage,
-server disks and networking remain deferred typed groups. Raw API access remains
+Registrar registration/transfers/renewals, IPs, load balancers, databases, object
+storage, server disks and networking remain deferred typed groups. Raw API access remains
 available, without implementing a second transport or an S3 transfer client.
