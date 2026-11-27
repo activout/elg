@@ -104,6 +104,12 @@ func TestLiveReadOnly(t *testing.T) {
 	}
 	run("server", "templates")
 	t.Log("server reads: OK")
+	volumes := run("volume", "list")["data"].([]any)
+	if len(volumes) > 0 {
+		run("volume", "get", volumes[0].(map[string]any)["id"].(string))
+	}
+	run("volume", "tiers")
+	t.Log("volume reads: OK")
 	run("api", "call", "email/costs")
 	t.Log("read-only generic POST: OK")
 }

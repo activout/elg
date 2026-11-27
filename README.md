@@ -155,6 +155,17 @@ elg server start SERVER_ID
 elg server stop SERVER_ID --dry-run
 elg server stop SERVER_ID --type soft --yes
 elg server delete SERVER_ID --yes --keep-ip
+
+elg volume tiers
+elg volume list
+elg volume get VOLUME_ID --json
+elg volume cost --tier balanced --size-gib 100
+elg volume create --name data --datacenter Falkenberg --tier balanced --size-gib 100
+elg volume attach VOLUME_ID --server SERVER_ID
+elg volume resize VOLUME_ID --size-gib 200
+elg volume rename VOLUME_ID --name data2
+elg volume detach VOLUME_ID --yes
+elg volume delete VOLUME_ID --yes
 ```
 
 Use each command's `--help` for supported flags. Server creation requires explicit
