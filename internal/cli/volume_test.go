@@ -15,7 +15,7 @@ func TestVolumeCommandsUseSDKEndpoints(t *testing.T) {
 		{[]string{"volume", "get", "v1"}, "/blockstorage/details", map[string]any{"volumeid": "v1"}},
 		{[]string{"volume", "cost", "--tier", "balanced", "--size-gib", "10"}, "/blockstorage/estimatedcost", map[string]any{"projectkey": "CLfixture", "tier": "balanced", "sizeingib": float64(10)}},
 		{[]string{"volume", "cost", "--volume", "v1"}, "/blockstorage/estimatedcost", map[string]any{"projectkey": "CLfixture", "volumeid": "v1"}},
-		{[]string{"volume", "create", "--name", "data", "--datacenter", "Falkenberg", "--tier", "balanced", "--size-gib", "10"}, "/blockstorage/create", map[string]any{"name": "data", "datacenter": "Falkenberg", "tier": "balanced", "sizeingib": float64(10)}},
+		{[]string{"volume", "create", "--name", "data", "--datacenter", "dc-fbg1", "--tier", "balanced", "--size-gib", "10"}, "/blockstorage/create", map[string]any{"name": "data", "datacenter": "dc-fbg1", "tier": "balanced", "sizeingib": float64(10)}},
 		{[]string{"volume", "rename", "v1", "--name", "data2"}, "/blockstorage/edit", map[string]any{"volumeid": "v1", "name": "data2"}},
 		{[]string{"volume", "resize", "v1", "--size-gib", "20"}, "/blockstorage/resize", map[string]any{"volumeid": "v1", "sizeingib": float64(20)}},
 		{[]string{"volume", "attach", "v1", "--server", "s1"}, "/blockstorage/attach", map[string]any{"volumeid": "v1", "serverid": "s1"}},
@@ -45,6 +45,9 @@ func TestVolumeListSortedAndShaped(t *testing.T) {
 	if len(rows) != 2 || rows[0].(map[string]any)["id"] != "v1" {
 		t.Fatalf("not sorted by ID: %v", rows)
 	}
+	if att := rows[0].(map[string]any)["attachments"]; att == nil {
+		t.Fatal("attachments must be [] rather than null")
+	}
 	v = f.success(f.run("volume", "get", "v1"))
 	att := v["data"].(map[string]any)["attachments"].([]any)
 	if att[0].(map[string]any)["serverid"] != "s1" {
@@ -56,8 +59,8 @@ func TestVolumeValidationConfirmationAndDryRun(t *testing.T) {
 	f := newFixture(t, nil)
 	for _, args := range [][]string{
 		{"volume", "get", "../x"},
-		{"volume", "create", "--name", " ", "--datacenter", "Falkenberg", "--tier", "balanced", "--size-gib", "10"},
-		{"volume", "create", "--name", "data", "--datacenter", "Falkenberg", "--tier", "balanced", "--size-gib", "0"},
+		{"volume", "create", "--name", " ", "--datacenter", "dc-fbg1", "--tier", "balanced", "--size-gib", "10"},
+		{"volume", "create", "--name", "data", "--datacenter", "dc-fbg1", "--tier", "balanced", "--size-gib", "0"},
 		{"volume", "create", "--name", "data"},
 		{"volume", "rename", "v1", "--name", ""},
 		{"volume", "resize", "v1", "--size-gib", "0"},
@@ -74,7 +77,7 @@ func TestVolumeValidationConfirmationAndDryRun(t *testing.T) {
 		errorCode(t, exit, out, err, 8, "confirmation_required")
 	}
 	for _, args := range [][]string{
-		{"volume", "create", "--name", "data", "--datacenter", "Falkenberg", "--tier", "balanced", "--size-gib", "10", "--dry-run"},
+		{"volume", "create", "--name", "data", "--datacenter", "dc-fbg1", "--tier", "balanced", "--size-gib", "10", "--dry-run"},
 		{"volume", "rename", "v1", "--name", "x", "--dry-run"},
 		{"volume", "resize", "v1", "--size-gib", "20", "--dry-run"},
 		{"volume", "attach", "v1", "--server", "s1", "--dry-run"},

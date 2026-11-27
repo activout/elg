@@ -19,8 +19,11 @@ func (a *app) volumeCommands() *cobra.Command {
 		if err != nil {
 			return err
 		}
-		rows := nonNil(*v)
-		sort.Slice(rows, func(i, j int) bool { return rows[i].VolumeID < rows[j].VolumeID })
+		sort.Slice(*v, func(i, j int) bool { return (*v)[i].VolumeID < (*v)[j].VolumeID })
+		rows := []volumeOut{}
+		for i := range *v {
+			rows = append(rows, newVolumeOut(&(*v)[i]))
+		}
 		return a.result(rows)
 	}))
 	root.AddCommand(command("tiers", "List volume tiers with size limits and IOPS", cobra.NoArgs, func(c *cobra.Command, args []string) error {
@@ -44,7 +47,7 @@ func (a *app) volumeCommands() *cobra.Command {
 		if err != nil {
 			return err
 		}
-		return a.result(v)
+		return a.volumeResult(v)
 	}))
 	root.AddCommand(a.volumeCost(), a.volumeCreate())
 
@@ -94,7 +97,7 @@ func (a *app) volumeCommands() *cobra.Command {
 		if err != nil {
 			return mutationError(err)
 		}
-		return a.result(v)
+		return a.volumeResult(v)
 	})
 	attach.Flags().StringVar(&server, "server", "", "Server ID")
 	_ = attach.MarkFlagRequired("server")
@@ -133,6 +136,20 @@ func (a *app) volumeCommands() *cobra.Command {
 	return root
 }
 
+// volumeOut always includes attachments; the SDK field is omitempty.
+type volumeOut struct {
+	*glesys.BlockStorageVolumeDetails
+	Attachments any `json:"attachments"`
+}
+
+func newVolumeOut(v *glesys.BlockStorageVolumeDetails) volumeOut {
+	return volumeOut{v, nonNil(v.Attachments)}
+}
+
+func (a *app) volumeResult(v *glesys.BlockStorageVolumeDetails) error {
+	return a.result(newVolumeOut(v))
+}
+
 func (a *app) volumeEdit(c *cobra.Command, verb string, p glesys.EditBlockStorageParams, call func(*glesys.BlockStorageService, context.Context, glesys.EditBlockStorageParams) (*glesys.BlockStorageVolumeDetails, error)) error {
 	if err := a.connect(c); err != nil {
 		return err
@@ -144,7 +161,7 @@ func (a *app) volumeEdit(c *cobra.Command, verb string, p glesys.EditBlockStorag
 	if err != nil {
 		return mutationError(err)
 	}
-	return a.result(v)
+	return a.volumeResult(v)
 }
 
 func (a *app) volumeCreate() *cobra.Command {
@@ -168,11 +185,11 @@ func (a *app) volumeCreate() *cobra.Command {
 		if err != nil {
 			return mutationError(err)
 		}
-		return a.result(v)
+		return a.volumeResult(v)
 	})
 	f := c.Flags()
 	f.StringVar(&p.Name, "name", "", "Volume name")
-	f.StringVar(&p.Datacenter, "datacenter", "", "Provider datacenter")
+	f.StringVar(&p.Datacenter, "datacenter", "", "Datacenter key, e.g. dc-fbg1")
 	f.StringVar(&p.Tier, "tier", "", "Tier slug from elg volume tiers, e.g. balanced")
 	f.IntVar(&p.SizeInGIB, "size-gib", 0, "Size in GiB, within the tier limits")
 	for _, n := range []string{"name", "datacenter", "tier", "size-gib"} {

@@ -160,7 +160,7 @@ elg volume tiers
 elg volume list
 elg volume get VOLUME_ID --json
 elg volume cost --tier balanced --size-gib 100
-elg volume create --name data --datacenter Falkenberg --tier balanced --size-gib 100
+elg volume create --name data --datacenter dc-fbg1 --tier balanced --size-gib 100
 elg volume attach VOLUME_ID --server SERVER_ID
 elg volume resize VOLUME_ID --size-gib 200
 elg volume rename VOLUME_ID --name data2

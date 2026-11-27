@@ -67,12 +67,12 @@ untested mutations remain unverified.
 
 - Block Storage (27 November 2026): the API wiki lists `projectkey` as required for
   `blockstorage/list` and `blockstorage/create`, but `CreateBlockStorageParams` has
-  no such field. A live read showed `blockstorage/list` succeeds without
-  `projectkey`, so the API key's project is used; create is expected to behave the
-  same but has not been verified live. `blockstorage/estimatedcost` returned HTTP 403
-  for the verification key with and without `projectkey`; it needs a key with the
-  right permission. Volume timestamps are decoded by the SDK as RFC 3339 and have
-  not been seen live, since the verification project has no volumes.
+  no such field. Live, both succeed without it; the API key's project is used.
+  Verified live on a disposable 1 GiB capacity volume: create, list, get, rename
+  and delete (delete refused without `--yes`). Timestamps are RFC 3339; `datacenter`
+  takes a key such as `dc-fbg1`, not a name. Attach, detach and resize need a
+  server and remain unverified live. `blockstorage/estimatedcost` returned HTTP 403
+  for the verification key even with Block Storage permissions.
 - The API wiki requires only `emailaccount` on creation and lists no password
   argument. The older SDK requires a `Password` field. The additive creation method
   follows the documented API and sends no arbitrary password. It captures a
