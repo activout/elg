@@ -15,4 +15,4 @@ require (
 	golang.org/x/sys v0.50.0 // indirect
 )
 
-replace github.com/glesys/glesys-go/v8 => github.com/activout/glesys-go/v8 v8.5.1-0.20261113094346-947b9e9ac34a
+replace github.com/glesys/glesys-go/v8 => github.com/activout/glesys-go/v8 v8.5.1-0.20261127200250-35777997b107

@@ -46,6 +46,7 @@ type app struct {
 	profile, project, configPath, format, timeoutText, baseURL            string
 	json, ndjson, pretty, yes, nonInteractive, dryRun, debug, showSecrets bool
 	client                                                                *glesys.Client
+	httpClient                                                            *http.Client
 	key                                                                   string
 	requestSecrets                                                        []string
 	meta                                                                  map[string]any
@@ -286,7 +287,8 @@ func (a *app) connect(c *cobra.Command) error {
 	}
 	transport := http.DefaultTransport.(*http.Transport).Clone()
 	transport.ResponseHeaderTimeout = timeout
-	a.client.SetHTTPClient(&http.Client{Transport: retryTransport{transport}, CheckRedirect: func(_ *http.Request, _ []*http.Request) error { return http.ErrUseLastResponse }})
+	a.httpClient = &http.Client{Transport: retryTransport{transport}, CheckRedirect: func(_ *http.Request, _ []*http.Request) error { return http.ErrUseLastResponse }}
+	a.client.SetHTTPClient(a.httpClient)
 	a.meta = map[string]any{"command": strings.TrimPrefix(c.CommandPath(), "elg "), "project": a.project}
 
 	return nil

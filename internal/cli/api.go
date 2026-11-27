@@ -2,17 +2,16 @@ package cli
 
 import (
 	"encoding/json"
-	glesys "github.com/glesys/glesys-go/v8"
 	"github.com/spf13/cobra"
 	"strings"
 )
 
 func (a *app) apiCommands() *cobra.Command {
-	root := &cobra.Command{Use: "api", Short: "Call API operations through the SDK transport"}
+	root := &cobra.Command{Use: "api", Short: "Call any API operation with the same HTTP client as typed commands"}
 	var method, file string
 	c := command("call ENDPOINT", "Return a complete provider envelope, subject to secret redaction", cobra.ExactArgs(1), func(c *cobra.Command, args []string) error {
-		if err := glesys.ValidateEndpoint(args[0]); err != nil {
-			return invalid(err.Error())
+		if !endpointPattern.MatchString(args[0]) {
+			return invalid("endpoint must be a relative service/operation without URL syntax or traversal")
 		}
 		method = strings.ToUpper(method)
 		if method != "GET" && method != "POST" {
@@ -58,7 +57,7 @@ func (a *app) apiCommands() *cobra.Command {
 		if (args[0] == "email/createaccount" || args[0] == "email/resetpassword") && !a.showSecrets {
 			return invalid("this API operation can generate a password; use the typed email command with --secret-output-file, or deliberately pass --show-secrets")
 		}
-		v, err := a.client.Request(a.ctx, method, args[0], params)
+		v, err := a.rawRequest(method, args[0], params)
 		if err != nil {
 			if !readOnly {
 				return mutationError(err)

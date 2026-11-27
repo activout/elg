@@ -39,7 +39,7 @@ func newFixture(t *testing.T, handler func(http.ResponseWriter, *http.Request)) 
 		if !ok || p == "" || k != "fixture-secret" {
 			t.Error("unexpected authentication")
 		}
-		if !strings.Contains(r.UserAgent(), "elg/test glesys-go/") {
+		if !strings.HasPrefix(r.UserAgent(), "elg/test") {
 			t.Error("unexpected user agent")
 		}
 		var body map[string]any
@@ -187,19 +187,27 @@ func TestOverviewPaginationAndEmptyLists(t *testing.T) {
 		if strings.HasSuffix(r.URL.Path, "/2") {
 			page = 2
 		}
-		if !strings.Contains(r.URL.EscapedPath(), "/filter/a%2Fb") {
-			t.Error("filter not retained or escaped")
+		if !strings.Contains(r.URL.EscapedPath(), "/filter/ab") {
+			t.Error("filter not retained")
 		}
 		fmt.Fprintf(w, `{"response":{"overview":{"summary":{"accounts":12},"domains":[{"domainname":"%d.example"}],"meta":{"page":%d,"total":2,"perpage":1}}}}`, page, page)
 	})
-	v := f.success(f.run("email", "overview", "--filter", "a/b"))
+	for _, bad := range []string{"a/b", "a?b", "a#b", "a%2Fb", "..", "."} {
+		if exit, _, _ := f.run("email", "overview", "--filter", bad); exit != 2 {
+			t.Fatalf("filter %q: exit %d, want 2", bad, exit)
+		}
+	}
+	if len(f.exchanges()) != 0 {
+		t.Fatal("rejected filter reached the API")
+	}
+	v := f.success(f.run("email", "overview", "--filter", "ab"))
 	if len(f.exchanges()) != 2 || v["meta"].(map[string]any)["pages_fetched"] != float64(2) {
 		t.Fatal("pagination incomplete")
 	}
 	if v["data"].(map[string]any)["summary"].(map[string]any)["accounts"] != float64(12) {
 		t.Fatal("summary aggregated incorrectly")
 	}
-	v = f.success(f.run("email", "overview", "--filter", "a/b", "--page", "2"))
+	v = f.success(f.run("email", "overview", "--filter", "ab", "--page", "2"))
 	if v["meta"].(map[string]any)["complete"] != false {
 		t.Fatal("one page labelled complete")
 	}

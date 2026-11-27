@@ -55,14 +55,11 @@ elg uses the [official GleSYS Go SDK](https://github.com/glesys/glesys-go),
 path, MIT licence and existing public methods. It adds capabilities and fixes
 needed by the CLI:
 
-- **Generic API requests:** `Client.Request` uses the existing SDK transport with
-  validated relative endpoints and scalar GET parameters. It preserves complete
-  JSON responses, including unknown fields and numeric precision.
 - **Per-client HTTP configuration:** `Client.SetHTTPClient` supports custom
   transports and timeouts without changing the global HTTP client. The default
   client refuses redirects.
 - **Structured errors:** `APIError` exposes HTTP status, provider status/message
-  and `Retry-After`, including provider failures returned with HTTP 200.
+  and `Retry-After`.
 - **Explicit email settings:** `EmailAccountPatch` and `EditAccountPatch` preserve
   supplied zero, disabled and empty values instead of treating them as omitted.
   `CreateAccountWithSettings` follows the documented creation API without requiring
@@ -75,8 +72,6 @@ needed by the CLI:
   to the zone apex, clear a server description or clear backup schedules.
 - **Response handling:** response bodies are always closed, reads are limited to
   16 MiB, and malformed or empty success JSON is rejected.
-- **Escaped overview filters:** email overview filters are safely encoded in API
-  request paths.
 
 See [SDK and API coverage](docs/sdk-coverage.md) for the pinned fork version,
 method mapping and verification limits.
